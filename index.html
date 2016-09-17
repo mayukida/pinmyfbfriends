@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Pin Your Friends</title>
+         <script src="https://maps.googleapis.com/maps/api/js?callback=initMap"async defer></script>
+         <link href='https://fonts.googleapis.com/css?family=Julius+Sans+One' rel='stylesheet' type='text/css'>
+         <link href='https://fonts.googleapis.com/css?family=Alegreya+Sans' rel='stylesheet' type='text/css'>
+
+<meta charset="UTF-8">
+</head>
+
+    <style>
+
+    body {
+      font-family: 'Julius Sans One', sans-serif;
+    }
+
+    #cont {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom:0;
+        right:0;
+        margin:60px;
+        //overflow: auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin: auto;
+      top:30px;
+    }
+
+    #map {
+      position: absolute;
+        width:100%;
+        height:60vh;
+        top:10vh;
+    }
+
+    #btn {
+      position: absolute;
+      top:80%;
+    }
+
+    #bottom {
+      position: absolute;
+      top:75vh;
+      width:100%;
+      height:40px;
+      font-family: 'Alegreya Sans', sans-serif;
+    }
+
+    #fb-login-button{
+      position: fixed;
+      top:10vh;
+    }
+
+    #pic {
+      position: absolute;
+      top:80vh;
+      width:100%;
+      height:40px;
+    }
+
+    
+
+
+    </style>
+
+
+<body>
+
+        <div id="cont">
+            <h1 id="title">Pin Your Friends</h1>
+            <div id="map"></div>
+            <div id="bottom">
+                <fb:login-button scope="public_profile,email" onlogin=checkLoginState(); autologoutlink="true"></fb:login-button>
+                <div id="status"></div>
+            </div>
+            <div id="pic"></div>
+            <button id="btn">Show the location</button>
+            <!-- <button id="fb-login-button">Login</button> -->
+            <!-- <div id="fb-login-button" data-max-rows="1" data-size="medium" data-show-faces="false" data-auto-logout-link="true"></div> -->
+        </div>
+
+
+<!-- checking login status -->
+<script>
+   var map;
+  // This is called with the results from from FB.getLoginStatus().
+  function statusChangeCallback(response) {
+        console.log('statusChangeCallback');
+        console.log(response);
+        // The response object is returned with a status field that lets the
+        // app know the current login status of the person.
+        // Full docs on the response object can be found in the documentation
+        // for FB.getLoginStatus().
+        if (response.status === 'connected') {
+          // Logged into your app and Facebook.
+          testAPI();
+        } else if (response.status === 'not_authorized') {
+          // The person is logged into Facebook, but not your app.
+          document.getElementById('status').innerHTML = 'Please log ' +
+            'into this app.';
+        } else {
+          // The person is not logged into Facebook, so we're not sure if
+          // they are logged into this app or not.
+          document.getElementById('status').innerHTML = 'Please log ' +
+            'into Facebook.';
+        }
+  }
+
+  // This function is called when someone finishes with the Login
+  // Button.  See the onlogin handler attached to it in the sample
+  // code below.
+  function checkLoginState() {
+        FB.getLoginStatus(function(response) {
+          statusChangeCallback(response);
+        });
+  }
+
+  window.fbAsyncInit = function() {
+      FB.init({
+        appId      : '1694062180861236',
+        cookie     : true,  // enable cookies to allow the server to access 
+                            // the session
+        xfbml      : true,  // parse social plugins on this page
+        version    : 'v2.5' // use graph api version 2.5
+      });
+
+      // Now that we've initialized the JavaScript SDK, we call 
+      // FB.getLoginStatus().  This function gets the state of the
+      // person visiting this page and can return one of three states to
+      // the callback you provide.  They can be:
+      //
+      // 1. Logged into your app ('connected')
+      // 2. Logged into Facebook, but not your app ('not_authorized')
+      // 3. Not logged into Facebook and can't tell if they are logged into
+      //    your app or not.
+      //
+      // These three cases are handled in the callback function.
+
+      FB.getLoginStatus(function(response) {
+        statusChangeCallback(response);
+      });
+
+      // var login = document.getElementById('fb-login-button');
+      var isset = true;
+        
+        btn.onclick = function(){
+
+          FB.login(function(resp){
+
+              console.log(resp);
+
+              if(resp.status == "connected"){
+                    console.log("login");
+
+                  // me
+                  FB.api("/me?fields=id,name,picture,email,location", function(resp2){
+                         console.log(resp2);
+                         //  console.log(resp2.location);
+                         // console.log(user);
+                         //user.name = resp2.name;
+                         // user.img = resp2.picture.data.url;
+                         // user.loc = resp2.
+                      if(isset==true){
+                         var img= document.createElement("img");
+                        img.src=resp2.picture.data.url;
+                        document.getElementById("pic").appendChild(img);
+
+                        user.location = resp2.location;
+                        //isset=false;
+                      }
+                      
+                     
+                         });
+
+                  // friends
+                  FB.api("/me/friends?fields=id,name,picture,email,location", function(resp3){
+                        console.log(resp3);
+                        //console.log(resp2.location);
+                        //console.log(user);
+
+                        //user.name = resp3.name;
+                        //user.img = resp3.picture.data.url;
+                        //console.log(resp3.data[0].picture.data.url);
+                        var geocoder = new google.maps.Geocoder();
+                        if(isset==true){
+                          for(var i=0;i<resp3.data.length;i++){
+                            var img = document.createElement("img");
+                            img.src = resp3.data[i].picture.data.url;
+                            document.getElementById("pic").appendChild(img);
+
+
+
+
+
+                    
+                            
+
+                            codeAddress();
+
+                            
+                            function codeAddress() {
+      //In this case it gets the address from an element on the page, but obviously you could just pass it to the method instead
+                              var address = resp3.data[i].location.name;//document.getElementById("address").value;
+
+                              geocoder.geocode( { 'address': address}, function(results, status) {
+                                    if (status == google.maps.GeocoderStatus.OK) {
+                                      //In this case it creates a marker, but you can get the lat and lng from the location.LatLng
+                                      console.log(results[0].geometry.location);
+
+                                      map.setCenter(results[0].geometry.location);
+                                      var marker = new google.maps.Marker({
+                                          map: map, 
+                                          position: results[0].geometry.location
+                                      });
+                                    } else {
+                                      alert("Geocode was not successful for the following reason: " + status);
+                                  }
+                                });
+                              }//codeAddress()
+                            }
+                        isset=false;
+                      }//if(isset)
+
+                  });//FB.api
+
+
+              }
+          },{
+              scope:"user_location,user_friends,public_profile,user_photos"
+          });
+      }
+
+  };
+
+
+
+
+
+
+
+
+  // Load the SDK asynchronously
+
+  
+  (function(d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = "//connect.facebook.net/en_US/sdk.js";
+        fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'facebook-jssdk'));
+
+  // Here we run a very simple test of the Graph API after login is
+  // successful.  See statusChangeCallback() for when this call is made.
+  function testAPI() {
+        console.log('Welcome!  Fetching your information.... ');
+        FB.api('/me', function(response) {
+          console.log('Successful login for: ' + response.name);
+          document.getElementById('status').innerHTML =
+            'You are logged in, ' + response.name + '!';
+        });
+  }
+// end checking login status
+
+
+
+// map
+// var map = null;
+var user = {
+    id:null,
+    name:null,
+    img:null,
+    loc:null
+};
+
+function loadScript() {
+    var script = document.createElement("script");
+    script.src = "http://maps.googleapis.com/maps/api/js?callback=initMap";
+    document.body.appendChild(script);
+}
+
+window.onload = loadScript;
+
+
+
+function initMap(){
+    var mapProp = {
+        center:new google.maps.LatLng(49,-123),
+        zoom:8,
+        mapTypeId:google.maps.MapTypeId.ROADMAP
+        };
+
+    map = new google.maps.Map(document.getElementById("map"),mapProp);
+
+//    var marker = new google.maps.Marker({
+//        position:new google.maps.LatLng(49.2827,-123.1207),
+//        animation:google.maps.Animation.BOUNCE
+//        });
+
+    marker.setMap(map);
+    google.maps.event.addDomListener(window, 'load', initMap);
+
+}
+
+
+
+
+
+
+
+</script>
+
+<!--
+  Below we include the Login Button social plugin. This button uses
+  the JavaScript SDK to present a graphical Login button that triggers
+  the FB.login() function when clicked.
+-->
+
+<!-- <fb:login-button scope="public_profile,email" onlogin="checkLoginState();">
+</fb:login-button>
+
+<div id="status">
+</div> -->
+
+
+
+</body>
+</html>
